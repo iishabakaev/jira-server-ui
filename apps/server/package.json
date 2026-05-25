@@ -1,0 +1,31 @@
+{
+  "name": "@app/server",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "build": "bun build src/index.ts --outdir dist --target bun",
+    "start": "bun run src/index.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "cli": "bun run src/cli/index.ts"
+  },
+  "dependencies": {
+    "@app/db": "workspace:*",
+    "@elysiajs/cors": "latest",
+    "@elysiajs/static": "latest",
+    "@elysiajs/swagger": "latest",
+    "@node-rs/argon2": "latest",
+    "@sinclair/typebox": "^0.34.0",
+    "drizzle-orm": "latest",
+    "elysia": "latest",
+    "openid-client": "^5.6.5",
+    "pg-boss": "latest",
+    "pino": "latest"
+  },
+  "devDependencies": {
+    "bun-types": "latest",
+    "typescript": "^5.6.0"
+  }
+}

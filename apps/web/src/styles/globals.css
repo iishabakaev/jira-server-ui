@@ -1,0 +1,201 @@
+@import "tailwindcss";
+
+/*
+  Дизайн-токены — портированы из спецификации ALFAIAAS kanban. Палитра
+  построена на oklch: одинаковая воспринимаемая контрастность как в
+  тёмной, так и в светлой темах. Tailwind v4 читает токены из @theme,
+  но мы также экспонируем raw CSS variables, чтобы их можно было
+  читать вручную из inline-style (например, цвет эпика по hue).
+*/
+
+@theme {
+  --color-background: oklch(14% 0.01 260);
+  --color-foreground: oklch(95% 0.005 260);
+  --color-surface: oklch(18% 0.01 260);
+  --color-surface-elev: oklch(22% 0.01 260);
+  --color-surface-hover: oklch(24% 0.01 260);
+  --color-muted: oklch(18% 0.01 260);
+  --color-muted-foreground: oklch(70% 0.005 260);
+  --color-tertiary: oklch(55% 0.005 260);
+  --color-border: oklch(28% 0.01 260);
+  --color-border-strong: oklch(35% 0.01 260);
+  --color-input: oklch(22% 0.01 260);
+  --color-primary: oklch(60% 0.18 255);
+  --color-primary-foreground: oklch(99% 0 0);
+  --color-accent: oklch(60% 0.18 255);
+  --color-accent-foreground: oklch(99% 0 0);
+  --color-destructive: oklch(60% 0.22 25);
+  --color-destructive-foreground: oklch(99% 0 0);
+  --color-ring: oklch(60% 0.18 255);
+  --radius: 0.5rem;
+  --font-sans: "Inter", "ui-sans-serif", "system-ui", "sans-serif";
+  --font-mono: "ui-monospace", "JetBrains Mono", "SF Mono", "Menlo", monospace;
+}
+
+:root,
+:root[data-theme="dark"] {
+  --background: oklch(14% 0.01 260);
+  --surface: oklch(18% 0.01 260);
+  --surface-elev: oklch(22% 0.01 260);
+  --surface-hover: oklch(24% 0.01 260);
+  --border: oklch(28% 0.01 260);
+  --border-strong: oklch(35% 0.01 260);
+  --text-primary: oklch(95% 0.005 260);
+  --text-secondary: oklch(70% 0.005 260);
+  --text-tertiary: oklch(55% 0.005 260);
+  --accent: oklch(60% 0.18 255);
+  --accent-tint: oklch(60% 0.18 255 / 0.14);
+  --accent-tint-strong: oklch(60% 0.18 255 / 0.3);
+  --state-pending: oklch(78% 0.16 75);
+  --state-pushing: oklch(65% 0.16 255);
+  --state-error: oklch(60% 0.22 25);
+  --state-conflict: oklch(60% 0.2 310);
+  --state-pending-tint: oklch(78% 0.16 75 / 0.12);
+  --state-error-tint: oklch(60% 0.22 25 / 0.12);
+  --p-highest: oklch(64% 0.22 25);
+  --p-high: oklch(72% 0.18 55);
+  --p-medium: oklch(70% 0.01 260);
+  --p-low: oklch(62% 0.07 240);
+  --p-lowest: oklch(50% 0.01 260);
+  --type-epic: oklch(64% 0.18 300);
+  --type-task: oklch(65% 0.15 245);
+  --type-bug: oklch(65% 0.22 25);
+  --type-story: oklch(65% 0.16 145);
+  --type-subtask: oklch(70% 0.13 200);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.28), 0 1px 0 rgba(255, 255, 255, 0.02) inset;
+  --shadow-pop: 0 16px 40px -12px rgba(0, 0, 0, 0.55), 0 0 0 1px var(--border);
+  --shadow-drag: 0 18px 40px -10px rgba(0, 0, 0, 0.6);
+  --rail-bg: oklch(12% 0.01 260);
+  --kbd-bg: oklch(24% 0.01 260);
+  --kbd-fg: var(--text-secondary);
+}
+
+:root[data-theme="light"] {
+  --background: oklch(99% 0 0);
+  --surface: oklch(98% 0.005 260);
+  --surface-elev: oklch(100% 0 0);
+  --surface-hover: oklch(96% 0.005 260);
+  --border: oklch(92% 0.005 260);
+  --border-strong: oklch(85% 0.01 260);
+  --text-primary: oklch(20% 0.01 260);
+  --text-secondary: oklch(45% 0.01 260);
+  --text-tertiary: oklch(60% 0.01 260);
+  --accent: oklch(56% 0.18 255);
+  --accent-tint: oklch(56% 0.18 255 / 0.1);
+  --accent-tint-strong: oklch(56% 0.18 255 / 0.2);
+  --state-pending: oklch(70% 0.16 75);
+  --state-pushing: oklch(56% 0.16 255);
+  --state-error: oklch(56% 0.22 25);
+  --state-conflict: oklch(54% 0.2 310);
+  --state-pending-tint: oklch(70% 0.16 75 / 0.14);
+  --state-error-tint: oklch(56% 0.22 25 / 0.1);
+  --p-highest: oklch(56% 0.22 25);
+  --p-high: oklch(64% 0.18 55);
+  --p-medium: oklch(55% 0.01 260);
+  --p-low: oklch(52% 0.07 240);
+  --p-lowest: oklch(65% 0.01 260);
+  --type-epic: oklch(54% 0.18 300);
+  --type-task: oklch(56% 0.15 245);
+  --type-bug: oklch(56% 0.22 25);
+  --type-story: oklch(52% 0.16 145);
+  --type-subtask: oklch(54% 0.13 200);
+  --shadow-sm: 0 1px 2px rgba(20, 24, 40, 0.06), 0 0 0 1px var(--border);
+  --shadow-pop: 0 16px 32px -12px rgba(20, 24, 40, 0.18), 0 0 0 1px var(--border);
+  --shadow-drag: 0 18px 32px -10px rgba(20, 24, 40, 0.2);
+  --rail-bg: oklch(97% 0.005 260);
+  --kbd-bg: oklch(96% 0.005 260);
+  --kbd-fg: var(--text-secondary);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-variant-numeric: tabular-nums;
+  background: var(--background);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Глобальные утилиты, повторно используемые в нескольких фичах. */
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--kbd-fg);
+  background: var(--kbd-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+/* Sync-pip и его pulse-анимация в pushing-состоянии. */
+.pip {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  position: relative;
+  flex-shrink: 0;
+}
+.pip[data-state="pending"] {
+  background: var(--state-pending);
+}
+.pip[data-state="pushing"] {
+  background: var(--state-pushing);
+}
+.pip[data-state="error"] {
+  background: var(--state-error);
+}
+.pip[data-state="conflict"] {
+  background: var(--state-conflict);
+}
+.pip[data-state="pushing"]::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1.5px solid var(--state-pushing);
+  animation: pushpulse 1.4s ease-out infinite;
+}
+
+@keyframes pushpulse {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Subtle scrollbar для горизонтального скролла board'а. */
+.board::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+.board::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 5px;
+}
+
+::selection {
+  background: var(--accent-tint-strong);
+  color: var(--text-primary);
+}

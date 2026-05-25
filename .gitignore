@@ -1,0 +1,47 @@
+node_modules
+dist
+build
+coverage
+.next
+.cache
+.parcel-cache
+.turbo
+out
+.omc
+.claude
+
+# env
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# editors
+.idea
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# os
+.DS_Store
+Thumbs.db
+*.pem
+
+# bun
+.bun
+**/*.bun
+
+# misc
+.vercel
+package-lock.json
+**/*.trace
+**/*.zip
+**/*.tar.gz
+**/*.tgz
+.tanstack

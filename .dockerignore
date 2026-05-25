@@ -1,0 +1,60 @@
+# Образ собирает зависимости через `bun install` внутри контейнера,
+# поэтому хостовый node_modules (с symlink'ами в .bun) нельзя слать в build-context:
+# он перетирает каталог, который только что создал bun install.
+
+# зависимости / артефакты сборки
+node_modules
+**/node_modules
+.bun
+**/.bun
+dist
+**/dist
+build
+**/build
+coverage
+**/coverage
+.next
+.cache
+.parcel-cache
+.turbo
+out
+
+# env-файлы — секреты не должны попадать в образ
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# git и история
+.git
+.gitignore
+.gitattributes
+
+# инструменты разработки
+.idea
+.vscode
+.omc
+.agents
+.editorconfig
+skills-lock.json
+
+# логи / временные файлы
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ОС / прочее
+.DS_Store
+Thumbs.db
+*.pem
+.vercel
+package-lock.json
+**/*.trace
+**/*.zip
+**/*.tar.gz
+**/*.tgz
+
+# документация и заметки — в рантайме не нужны
+docs
+README.md

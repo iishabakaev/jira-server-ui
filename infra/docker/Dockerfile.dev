@@ -1,0 +1,28 @@
+# syntax=docker/dockerfile:1.7
+# Dev-образ: исходники прокидываются через bind-mount/Compose Watch,
+# собирать ничего не надо — `bun --watch` (server/jobs) и vite (web)
+# подхватят изменения внутри контейнера.
+# См. infra/compose/compose.dev.yaml.
+
+FROM oven/bun:1.2
+WORKDIR /repo
+
+# Манифесты + lockfile — отдельным слоем для кэша bun install.
+COPY package.json bun.lock tsconfig.base.json ./
+COPY apps/server/package.json apps/server/
+COPY apps/web/package.json apps/web/
+COPY apps/jobs/package.json apps/jobs/
+COPY packages/db/package.json packages/db/
+COPY packages/eden/package.json packages/eden/
+COPY packages/jira/package.json packages/jira/
+COPY packages/ui/package.json packages/ui/
+COPY packages/config/package.json packages/config/
+
+RUN bun install --frozen-lockfile
+
+# Исходники нужны как baseline; Watch будет точечно синхать изменения,
+# а bun --watch / vite перезапустят процесс при detect.
+COPY . .
+
+ENV NODE_ENV=development
+EXPOSE 3000 5173 8080

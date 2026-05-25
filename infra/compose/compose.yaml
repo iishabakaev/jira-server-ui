@@ -1,0 +1,114 @@
+# Compose разворачивает один продуктовый образ в трёх ролях + Postgres.
+# Никакого Redis: Postgres — единственный внешний сервис.
+# Для локального dev можно собирать `app` локально:
+#   docker compose -f infra/compose/compose.yaml build app
+#   docker compose -f infra/compose/compose.yaml up
+# Watch-режим (rebuild при изменении исходников):
+#   docker compose -f infra/compose/compose.yaml up --watch
+
+x-app-image: &app-image
+  image: jira-ui:latest
+
+x-app-build: &app-build
+  context: ../..
+  dockerfile: infra/docker/Dockerfile
+
+# Правила watch одинаковы для api/worker/web: исходник продуктового
+# образа — весь монорепо, поэтому пересобираем при любом изменении
+# apps/, packages/, инфраструктурного Dockerfile и манифестов.
+x-app-watch: &app-watch
+  - action: rebuild
+    path: ../../apps
+  - action: rebuild
+    path: ../../packages
+  - action: rebuild
+    path: ../../infra/docker
+  - action: rebuild
+    path: ../../package.json
+  - action: rebuild
+    path: ../../bun.lock
+  - action: rebuild
+    path: ../../tsconfig.base.json
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: jira_ui
+    command:
+      - postgres
+      - -c
+      - max_connections=200
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - work_mem=16MB
+    volumes:
+      - pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d jira_ui"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  app:
+    <<: *app-image
+    build: *app-build
+    profiles: ["build-only"]
+
+  api:
+    <<: *app-image
+    build: *app-build
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      ROLE: api
+      NODE_ENV: production
+      DATABASE_URL: postgres://app:app@postgres:5432/jira_ui
+      APP_BASE_URL: http://localhost:3000
+      SESSION_COOKIE_NAME: jira_ui_sid
+      AUTH_LOCAL_ENABLED: "true"
+      AUTH_KEYCLOAK_ENABLED: "false"
+      LOG_LEVEL: info
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    develop:
+      watch: *app-watch
+
+  worker:
+    <<: *app-image
+    build: *app-build
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      ROLE: worker
+      NODE_ENV: production
+      DATABASE_URL: postgres://app:app@postgres:5432/jira_ui
+      LOG_LEVEL: info
+    develop:
+      watch: *app-watch
+
+  web:
+    <<: *app-image
+    build: *app-build
+    environment:
+      ROLE: web
+      PORT: 8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      - api
+    develop:
+      watch: *app-watch
+
+volumes:
+  pg:

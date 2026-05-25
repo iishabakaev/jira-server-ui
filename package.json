@@ -1,0 +1,32 @@
+{
+  "name": "jira-ui",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:server": "bun --filter @app/server dev",
+    "dev:web": "bun --filter @app/web dev",
+    "dev:jobs": "bun --filter @app/jobs dev",
+    "build": "bun --filter '*' build",
+    "test": "bun --filter '*' test",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "typecheck": "bun --filter '*' typecheck",
+    "db:generate": "bun --filter @app/db generate",
+    "db:migrate": "bun --filter @app/db migrate",
+    "db:seed": "bun --filter @app/db seed",
+    "cli": "bun --filter @app/server cli"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.0.0",
+    "bun-types": "latest",
+    "typescript": "^5.6.0"
+  },
+  "trustedDependencies": [
+    "@biomejs/biome"
+  ]
+}

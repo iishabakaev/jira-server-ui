@@ -1,0 +1,138 @@
+# Dev-стек с hot-reload: bun --watch для server/jobs, vite HMR для web.
+# Compose Watch синхает исходники в работающий контейнер (без rebuild).
+# node_modules живут внутри образа — host'овые арт-зависимости не мешают
+# (на маке native-биндинги linux/host разные).
+#
+# Запуск:
+#   docker compose -f infra/compose/compose.dev.yaml up --build --watch
+
+x-dev-build: &dev-build
+  context: ../..
+  dockerfile: infra/docker/Dockerfile.dev
+
+# Общие правила Watch: исходники синхаем, манифесты — rebuild.
+x-dev-watch: &dev-watch
+  - action: sync
+    path: ../../apps
+    target: /repo/apps
+    ignore:
+      - node_modules/
+      - dist/
+      - .next/
+      - .turbo/
+  - action: sync
+    path: ../../packages
+    target: /repo/packages
+    ignore:
+      - node_modules/
+      - dist/
+  - action: rebuild
+    path: ../../package.json
+  - action: rebuild
+    path: ../../bun.lock
+  - action: rebuild
+    path: ../../tsconfig.base.json
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: jira_ui
+    command:
+      - postgres
+      - -c
+      - max_connections=200
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - work_mem=16MB
+    volumes:
+      - pg-dev:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d jira_ui"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # Одноразовый прогон миграций до старта api.
+  migrate:
+    build: *dev-build
+    command: ["bun", "run", "packages/db/src/migrate.ts"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://app:app@postgres:5432/jira_ui
+    restart: "no"
+
+  api:
+    build: *dev-build
+    command: ["bun", "run", "--watch", "apps/server/src/index.ts"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    environment:
+      ROLE: api
+      NODE_ENV: development
+      DATABASE_URL: postgres://app:app@postgres:5432/jira_ui
+      # В dev фронтенд хостится Vite на 5173 и проксирует /api на api:3000.
+      # Браузер шлёт Origin: http://localhost:5173, поэтому APP_BASE_URL и
+      # CORS/CSRF-allowlist должны соответствовать именно этому origin.
+      APP_BASE_URL: http://localhost:5173
+      SESSION_COOKIE_NAME: jira_ui_sid
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      AUTH_LOCAL_ENABLED: "true"
+      AUTH_KEYCLOAK_ENABLED: "false"
+      LOG_LEVEL: debug
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    develop:
+      watch: *dev-watch
+
+  worker:
+    build: *dev-build
+    command: ["bun", "run", "--watch", "apps/jobs/src/index.ts"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    env_file:
+      - .env
+    environment:
+      ROLE: worker
+      NODE_ENV: development
+      DATABASE_URL: postgres://app:app@postgres:5432/jira_ui
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      SYNC_DEFAULT_WINDOW_DAYS: 7
+      LOG_LEVEL: debug
+    develop:
+      watch: *dev-watch
+
+  # В dev отдаём фронт через vite-dev-server, а не статикой Bun'a.
+  # Vite сам проксирует /api на сервис api через docker-сеть.
+  web:
+    build: *dev-build
+    working_dir: /repo/apps/web
+    command: ["bun", "run", "dev", "--", "--host", "0.0.0.0", "--port", "5173"]
+    depends_on:
+      - api
+    environment:
+      NODE_ENV: development
+      VITE_API_PROXY: http://api:3000
+    ports:
+      - "5173:5173"
+    develop:
+      watch: *dev-watch
+
+volumes:
+  pg-dev:
